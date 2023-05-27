@@ -1,5 +1,6 @@
 import pygame
 from network import Network
+import math
 
 width = 794
 height = 535
@@ -21,25 +22,36 @@ class Player():
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
         self.vel = 3
+        self.rotation_angle = 0  # Initial rotation angle
 
     def draw(self, win):
-        win.blit(self.image, self.rect)
+        rotated_image = pygame.transform.rotate(self.image, self.rotation_angle)  # Rotate the image
+        rotated_rect = rotated_image.get_rect(center=self.rect.center)
+        win.blit(rotated_image, rotated_rect.topleft)
 
     def move(self):
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_LEFT]:
-            self.x -= self.vel
+            self.rotation_angle += 5
+            if self.rotation_angle >= 360:
+                self.rotation_angle = 0
 
         if keys[pygame.K_RIGHT]:
-            self.x += self.vel
+            self.rotation_angle -= 5
+            if self.rotation_angle < 0:
+                self.rotation_angle = 355
+
+        angle_radians = math.radians(self.rotation_angle)
 
         if keys[pygame.K_UP]:
-            self.y -= self.vel
+            self.x += self.vel * math.cos(angle_radians)
+            self.y -= self.vel * math.sin(angle_radians)
 
         if keys[pygame.K_DOWN]:
-            self.y += self.vel
-
+            self.x -= self.vel * math.cos(angle_radians)
+            self.y += self.vel * math.sin(angle_radians)
+            
         self.update()
 
     def update(self):
@@ -48,11 +60,11 @@ class Player():
 
 def read_pos(str):
     str = str.split(",")
-    return int(str[0]), int(str[1])
+    return int(float(str[0])), int(float(str[1])), int(float(str[2]))
 
 
 def make_pos(tup):
-    return str(tup[0]) + "," + str(tup[1])
+    return str(tup[0]) + "," + str(tup[1]) + "," + str(tup[2])
 
 
 def redrawWindow(win, player, player2):
@@ -80,9 +92,10 @@ def main():
 
     while run:
         clock.tick(60)
-        p2Pos = read_pos(n.send(make_pos((p.x, p.y))))
+        p2Pos = read_pos(n.send(make_pos((p.x, p.y, p.rotation_angle))))
         p2.x = p2Pos[0]
         p2.y = p2Pos[1]
+        p2.rotation_angle = p2Pos[2]
         p2.update()
 
         for event in pygame.event.get():
