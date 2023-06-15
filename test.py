@@ -125,6 +125,9 @@ class Test:
         self.clock.tick()  # Start the clock
         speed_increment_count = 0
         enemy_car_speed_increment = 0.5  # Increase in enemy car speed when player speed increases
+        self.move_left = False
+        self.move_right = False
+        
 
         while not self.crashed:
             for event in pygame.event.get():
@@ -133,13 +136,9 @@ class Test:
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
-                        # if self.car_x_coordinate > 310:  # Check if car is not at the left boundary
-                            self.car_x_coordinate -= 50  # Move one lane to the left
-                            print("CAR X COORDINATE:", self.car_x_coordinate)
+                        self.move_left = True
                     elif event.key == pygame.K_RIGHT:
-                        # if self.car_x_coordinate < 450:  # Check if car is not at the right boundary
-                            self.car_x_coordinate += 50  # Move one lane to the right
-                            print("CAR X COORDINATE:", self.car_x_coordinate)
+                        self.move_right = True
                     elif event.key == pygame.K_UP:
                          if self.car_speed < 30:
                             self.car_speed += self.car_speed_increment
@@ -155,6 +154,18 @@ class Test:
                         if(self.car_speed < 2):
                             self.enemy_car_speed = 2
                         print("CAR SPEED:", self.car_speed)
+                elif event.type == pygame.KEYUP:
+                    if event.key == pygame.K_LEFT:
+                        self.move_left = False
+                    elif event.key == pygame.K_RIGHT:
+                        self.move_right = False
+
+            if self.move_left:
+                    self.car_x_coordinate -= 5  # Move one lane to the left
+                    print("CAR X COORDINATE:", self.car_x_coordinate)
+            elif self.move_right:
+                    self.car_x_coordinate += 5  # Move one lane to the right
+                    print("CAR X COORDINATE:", self.car_x_coordinate)
 
             # Ensure the car speed does not go below zero
             self.car_speed = max(0, self.car_speed)
