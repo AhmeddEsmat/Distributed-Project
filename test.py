@@ -15,9 +15,11 @@ class Test:
         self.clock = pygame.time.Clock()
         self.gameDisplay = None
         self.username = ""
+        self.previous_score = 0  # New score variable
+        self.previous_distance = 0  # New score variable
+        self.previous_time = 0  # New score variable
+        self.timer = 60  # Set the timer to 1 minute (60 seconds)
         self.login_window()
-
-
         self.initialize()
 
     def login_window(self):
@@ -67,7 +69,7 @@ class Test:
         self.error_label.config(text=message)
 
     def initialize(self):
-        pygame.init()
+        # pygame.init()
         self.display_width = 800
         self.display_height = 600
         self.black = (0, 0, 0)
@@ -75,12 +77,16 @@ class Test:
         self.clock = pygame.time.Clock()
         self.gameDisplay = None
         self.crashed = False
+        self.font = pygame.font.SysFont("Arial", 24)
 
 
         self.carImg = pygame.image.load('car.png')
         self.car_x_coordinate = (self.display_width * 0.45)
         self.car_y_coordinate = (self.display_height * 0.8)
         self.car_width = 49
+        self.count = self.previous_score  # Set the count to the previous score
+        self.distance_covered = self.previous_distance  # Set the distance covered to the previous distance
+        self.time = self.previous_time  # Set the time to the previous time
 
         # enemy_car
         self.enemy_car = pygame.image.load('enemy_car_1.png')
@@ -98,16 +104,17 @@ class Test:
         self.bg_y2 = -600
         self.bg_speed = 3
         self.max_bg_speed = 30  # Maximum background speed
-        self.count = 0
-        self.distance_covered = 0
-
-        self.car_speed = 0  # Set starting speed to 0
+        
+        self.car_speed = 4  # Set starting speed to 0
         self.car_speed_increment = 2
 
         self.max_car_speed = 30 # Set maximum speed to 120
 
-    def car(self, car_x_coordinate, car_y_coordinate):
+    def car(self, car_x_coordinate, car_y_coordinate, font):
         self.gameDisplay.blit(self.carImg, (car_x_coordinate, car_y_coordinate))
+        username_text = font.render(self.username, True, (0, 0, 255))  # Blue color (RGB: 0, 0, 255)
+        username_text_rect = username_text.get_rect(center=(car_x_coordinate + self.car_width // 2, car_y_coordinate + self.car_width + 60))
+        self.gameDisplay.blit(username_text, username_text_rect)
 
     def racing_window(self):
         self.gameDisplay = pygame.display.set_mode((self.display_width, self.display_height))
@@ -116,7 +123,6 @@ class Test:
 
     def run_car(self):
         self.clock.tick()  # Start the clock
-        self.timer = 60  # Set the timer to 1 minute (60 seconds)
         speed_increment_count = 0
         enemy_car_speed_increment = 0.5  # Increase in enemy car speed when player speed increases
 
@@ -127,11 +133,11 @@ class Test:
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
-                        if self.car_x_coordinate > 310:  # Check if car is not at the left boundary
+                        # if self.car_x_coordinate > 310:  # Check if car is not at the left boundary
                             self.car_x_coordinate -= 50  # Move one lane to the left
                             print("CAR X COORDINATE:", self.car_x_coordinate)
                     elif event.key == pygame.K_RIGHT:
-                        if self.car_x_coordinate < 450:  # Check if car is not at the right boundary
+                        # if self.car_x_coordinate < 450:  # Check if car is not at the right boundary
                             self.car_x_coordinate += 50  # Move one lane to the right
                             print("CAR X COORDINATE:", self.car_x_coordinate)
                     elif event.key == pygame.K_UP:
@@ -146,6 +152,8 @@ class Test:
                         self.enemy_car_speed -= self.car_speed_increment  # Decrease enemy car speed
                         self.bg_speed -= 2  # Decrease background speed
                         self.bg_speed = max(self.bg_speed, 0)  # Ensure minimum background speed
+                        if(self.car_speed < 2):
+                            self.enemy_car_speed = 2
                         print("CAR SPEED:", self.car_speed)
 
             # Ensure the car speed does not go below zero
@@ -165,8 +173,8 @@ class Test:
                 self.enemy_car_starty = 0 - self.enemy_car_height
                 self.enemy_car_startx = random.randrange(310, 450)
 
-            self.car(self.car_x_coordinate, self.car_y_coordinate)
-            self.highscore(self.count, self.car_speed, self.distance_covered)
+            self.car(self.car_x_coordinate, self.car_y_coordinate, self.font)
+            self.highscore(self.count, self.car_speed, self.distance_covered, self.timer)
             self.count += self.bg_speed
             self.distance_covered += self.car_speed * 0.1  # Update distance covered based on speed
 
@@ -180,6 +188,10 @@ class Test:
                 if self.car_x_coordinate > self.enemy_car_startx and self.car_x_coordinate < self.enemy_car_startx + self.enemy_car_width or self.car_x_coordinate + self.car_width > self.enemy_car_startx and self.car_x_coordinate + self.car_width < self.enemy_car_startx + self.enemy_car_width:
                     self.crashed = True
                     self.display_message("Game Over !!!")
+                      
+            if self.car_x_coordinate <= 270 or self.car_x_coordinate >= 480:
+                self.crashed = True
+                self.display_message("Off Road!")
 
             pygame.display.update()
             self.clock.tick(60)
@@ -191,6 +203,9 @@ class Test:
                 self.bg_speed += 1
                 self.bg_speed = min(self.bg_speed, self.max_bg_speed)  # Limit background speed
                 enemy_car_speed_increment += 1  # Increase the increment for enemy car speed
+            print("score is",self.count)
+            self.highscore(self.count, self.car_speed, self.distance_covered, self.timer)
+        
 
     def display_message(self, msg):
         font = pygame.font.SysFont("comicsansms", 72, True)
@@ -200,8 +215,18 @@ class Test:
         pygame.display.update()
         self.clock.tick(60)
         sleep(1)
+        self.previous_score = self.count
+        self.previous_distance = self.distance_covered
+        self.previous_time = self.timer
+        print(self.previous_score,"prev score")
+        print(self.count)
         self.initialize()
         self.racing_window()
+        self.count=self.previous_score
+        self.distance_covered=self.previous_distance
+        self.timer=self.previous_time
+        print(self.count)
+        print(self.previous_score,"after score")
 
     def back_ground_road(self):
         self.gameDisplay.blit(self.bgImg, (self.bg_x1, self.bg_y1))
@@ -219,12 +244,12 @@ class Test:
     def run_enemy_car(self, thingx, thingy):
         self.gameDisplay.blit(self.enemy_car, (thingx, thingy))
 
-    def highscore(self, count, car_speed, distance_covered):
+    def highscore(self, count, car_speed, distance_covered, timer):
         font = pygame.font.SysFont("arial", 20)
-        text_score = font.render("Score: " + str(count), True, self.white)
+        text_score = font.render("Score: " + str(self.count), True, self.white)
         text_speed = font.render("Speed: " + str(car_speed) + " km/h", True, self.white)
         text_distance = font.render("Distance: " + str(int(distance_covered)) + " m", True, self.white)
-        text_timer = font.render("Time: {:.2f}".format(self.timer), True, self.white)  # Display the remaining time
+        text_timer = font.render("Time: {:.2f}".format(timer), True, self.white)  # Display the remaining time
         self.gameDisplay.blit(text_score, (0, 0))
         self.gameDisplay.blit(text_speed, (0, 25))
         self.gameDisplay.blit(text_distance, (0, 50))
