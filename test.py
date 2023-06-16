@@ -247,10 +247,10 @@ class Test:
         self.bg_y2 += self.bg_speed
 
         if self.bg_y1 >= self.display_height:
-            self.bg_y1 = -600
+            self.bg_y1 = self.bg_y2 - self.bgImg.get_height()
 
         if self.bg_y2 >= self.display_height:
-            self.bg_y2 = -600
+            self.bg_y2 = self.bg_y1 - self.bgImg.get_height()
 
     def run_enemy_car(self, thingx, thingy):
         self.gameDisplay.blit(self.enemy_car, (thingx, thingy))
