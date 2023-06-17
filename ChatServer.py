@@ -35,7 +35,7 @@ def handle(client):
 # receive fn, listen and accepts new connections
 
 def receive():
-    while True:  # while true we're going to accept new connections, next we use the client socket for communication and to send not the server (server.send) it's just a host that accepts new connections. we use it to request nickname and add it to the players list
+    while True:  # while true we're going to accept new connections, next we use the client socket for communication and to send not the server (server.send) it's just a host that accepts new connections. we use it to request nickname and add it to the racers list
         client, address = server.accept()
         print(f"connected with {str(address)}!")
 
