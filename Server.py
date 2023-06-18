@@ -7,6 +7,17 @@ from pymongo import MongoClient
 import pymongo.errors
 import pymongo
 import sys
+import threading
+import subprocess
+
+def run_files():
+    subprocess.call(['python', 'Chat_Server.py'])
+    subprocess.call(['python', 'chatserver.py'])
+
+file_thread = threading.Thread(target=run_files)
+file_thread.start()
+
+
 
 connection_string = "mongodb+srv://ibrahimamr91:OgR74lEBSFFCjEgd@cluster0.o5hcf1p.mongodb.net/"
 
