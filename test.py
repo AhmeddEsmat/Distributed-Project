@@ -174,6 +174,8 @@ class CarRacing:
         self.clock.tick()
         self.move_left = False
         self.move_right = False
+        self.move_up = False
+        self.move_down = False
 
         while True:
             if not self.dummy_init and self.host_objects.game_started:
@@ -212,20 +214,17 @@ class CarRacing:
                     pygame.QUIT
                     pygame.quit()
                     self.client_socket.close()
-                    print("Game closed")
 
 
                 if self.host_objects.game_started:
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_UP:
                             if (self.enemy_car_speed < self.max_enemy_speed) and (self.bg_speed < self.max_bg_speed):
-                                self.enemy_car_speed += 2
-                                self.bg_speed += 2
+                                self.move_up = True
 
                         if event.key == pygame.K_DOWN:
-                            if (self.enemy_car_speed > self.min_enemy_speed) and (self.bg_speed >= 2):
-                                self.enemy_car_speed -= 2
-                                self.bg_speed -= 2
+                            if (self.enemy_car_speed > self.min_enemy_speed) and (self.bg_speed >= 2) and (self.bg_speed > 0):
+                                self.move_down = True
 
                         if event.key == pygame.K_LEFT:
                             self.move_left = True
@@ -238,6 +237,10 @@ class CarRacing:
                             self.move_left = False
                         elif event.key == pygame.K_RIGHT:
                             self.move_right = False
+                        elif event.key == pygame.K_UP:
+                            self.move_up = False
+                        elif event.key == pygame.K_DOWN:
+                            self.move_down = False
 
             if self.host_objects.game_started:
 
@@ -247,6 +250,18 @@ class CarRacing:
                 elif self.move_right:
                         self.host_racer.car_x_coordinate += 5  # Move one lane to the right
                         print("CAR X COORDINATE:", self.host_racer.car_x_coordinate)
+                elif self.move_up:
+                    if(self.bg_speed < 40):
+                        self.enemy_car_speed += 2
+                        self.bg_speed += 2
+                        print("Enemy Car Speed:", self.enemy_car_speed)
+                        print("Background Speed:", self.bg_speed)
+                elif self.move_down:
+                        if(self.enemy_car_speed > self.min_enemy_speed) and (self.bg_speed >= 2) and (self.bg_speed > 0):
+                            self.enemy_car_speed -= 2
+                            self.bg_speed -= 2
+                            print("Enemy Car Speed:", self.enemy_car_speed)
+                            print("Background Speed:", self.bg_speed)
             if self.bg_y1 >= self.display_height:
                 self.bg_y1 = -600
 
@@ -283,8 +298,8 @@ class CarRacing:
 
             if self.timer <= 0:
                 self.display_message("Time's up!", 7)
+
                 self.host_racer.finished = True
-                print("Race Finished")
                 pygame.QUIT
                 pygame.quit()
             pygame.display.update()
