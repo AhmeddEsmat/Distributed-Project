@@ -23,7 +23,7 @@ class CarRacing:
         self.clock = pygame.time.Clock()
         self.gameDisplay = None
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client_socket.connect(('localhost', 5050))
+        self.client_socket.connect(('localhost', 6000))
         self.racers = []
 
 

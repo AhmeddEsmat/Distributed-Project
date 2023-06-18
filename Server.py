@@ -3,6 +3,50 @@ import threading
 from Objects import Objects
 import pickle
 from Racer import Racer
+from pymongo import MongoClient
+import pymongo.errors
+import pymongo
+import sys
+
+connection_string = "mongodb+srv://ibrahimamr91:OgR74lEBSFFCjEgd@cluster0.o5hcf1p.mongodb.net/"
+
+client = MongoClient(connection_string)
+databaseMain = client["CarRacing"]
+collection = databaseMain["Racer"]
+databaseReplica = client["CarRacing2"]
+collection1 = databaseReplica["Racer2"]
+databases = [collection, collection1]
+
+# Check database connection
+def DbConnect():
+    global database
+    global databases
+    try:
+        if databaseMain.command('ping')['ok'] == 1:
+            print("Successfully connected to MongoDB Main database!")
+            database = databaseMain
+            databases = [databaseMain]
+        elif databaseReplica.command('ping')['ok'] == 1:
+            print("Successfully connected to MongoDB Replica database!")
+            database = databaseReplica
+            databases = [databaseReplica]
+        else:
+            print("Failed to connect to MongoDB both Main and Replica databases!")
+        if databaseMain.command('ping')['ok'] == 1 and databaseReplica.command('ping')['ok'] == 1:
+            databases = [databaseMain, databaseReplica]
+    except pymongo.errors.ConnectionFailure as e:
+        print("Failed to connect to MongoDB databases:", e)
+        sys.exit()
+
+def getPlayerDB():
+    try:
+        data = list(collection.find())
+        if data:
+            return data
+        else:
+            print("Not in database.")
+    except Exception as e:
+        print("Failed to get racer data from the database:", e)
 
 
 class CarRacingServer:
@@ -10,7 +54,7 @@ class CarRacingServer:
     def __init__(self):
         self.objects = Objects()
         self.host = "localhost"  # Server IP address
-        self.port = 5050  # Server port
+        self.port = 6000  # Server port
         self.server_socket = None
         self.players = []
         self.lock = threading.Lock()
@@ -30,13 +74,24 @@ class CarRacingServer:
                 return
 
     def register_racer(self, player):
-        for i in self.players:
-            if i.username == player.username:
-                return "Username taken"
-        self.lock.acquire()
-        self.players.append(player)
-        self.lock.release()
-        return "Successfully joined the race!!!"
+        DbConnect()
+        data_entries = getPlayerDB()
+        for data in data_entries:
+           if data.get("username") == player.username:
+               return "Username taken"
+
+        data = {"username": player.username}
+
+        # Write the data to the database
+        try:
+            collection.insert_one(data)
+            collection1.insert_one(data)
+            self.lock.acquire()
+            self.players.append(player)
+            self.lock.release()
+            return "Successfully joined the race!!!"
+        except Exception as e:
+            return "Failed, please try again later."
 
     def update_map(self):
         while True:
@@ -124,7 +179,6 @@ class CarRacingServer:
             except socket.error:
                 client_socket.close()
                 break
-
 
 if __name__ == '__main__':
     server = CarRacingServer()
